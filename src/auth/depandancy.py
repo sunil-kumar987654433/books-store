@@ -25,7 +25,7 @@ class TokenBearer(HTTPBearer):
             payload = HashingToken().decode_data(token)
             self.verify_token_data(token_data=payload)
             
-            return cred
+            return payload
         except ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,9 +47,12 @@ class AccessTokenBearer(TokenBearer):
             )
         
 class RefreshTokenBearer(TokenBearer):
-    def verify_token_data(self, token_data: dict)->None:
+    def verify_token_data(self, token_data: dict):
+        print("token_data-----", token_data)
         if token_data and not token_data.get("refresh"):
             raise HTTPException(
                 detail="Please provide refresh token",
                 status_code=400
             )
+        # return token_data.get("sub")
+        

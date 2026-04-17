@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.main import get_session
 from src.auth.service import UserService
 from src.auth.schema import UserCreate, UserLogin
+from src.auth.depandancy import RefreshTokenBearer
 
 
 
@@ -34,6 +35,11 @@ async def UserSignInAccount(user_data: UserLogin, session: AsyncSession= Depends
         max_age=res.get("refresh_token_expired_time") ,
         secure=True, 
         httponly=True,
-
     )
     return response
+
+@auth_router.get("/refresh-token")
+async def get_new_access_token(token_detail:dict = Depends(RefreshTokenBearer()), session: AsyncSession = Depends(get_session)):
+    user_uid = token_detail.get("sub")
+    return await user_service.create_new_access_token(user_uid, session)
+    
