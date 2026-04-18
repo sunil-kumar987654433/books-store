@@ -24,7 +24,7 @@ class HashingToken:
     def encode_data(payload: dict):
         data = payload.copy()
         data['jti'] = str(uuid.uuid4())
-        return jwt.encode(payload=payload, algorithm=Config.JWT_ALGORITHM, key=Config.JWT_SECRET)
+        return jwt.encode(payload=data, algorithm=Config.JWT_ALGORITHM, key=Config.JWT_SECRET)
     
     @staticmethod
     def decode_data(encoded_jwt):

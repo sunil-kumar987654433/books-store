@@ -1,20 +1,22 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import DateTime, String, Column, Integer, func, text
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from datetime import date
+from typing import Optional
+from src.auth import models
 
 class Book(SQLModel, table=True):
     __tablename__ = 'books'
-    # __table_args__ = {
-    #     "schema": "books"
-    # }
-
     key: uuid.UUID = Field(sa_column=Column(
         pg.UUID(as_uuid=True), nullable=False, unique=True, primary_key=True
     ), default_factory=uuid.uuid4)
+    user_id: Optional[uuid.UUID] = Field(
+        default=None,
+        foreign_key='auth_users.uid',
+    )
     title: str = Field(
         description='Name of the books', index=True)
         
@@ -47,6 +49,8 @@ class Book(SQLModel, table=True):
             onupdate=lambda: datetime.now(timezone.utc)
         )
     )
+
+    user: Optional['models.User'] = Relationship(back_populates="books")
 
     def __repr__(self):
         return f"<Book (title: {self.title})>"

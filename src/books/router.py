@@ -5,21 +5,28 @@ from src.books.schema import BookCreateModel, Book as BookResponse, BookUpdateMo
 from src.db.main import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.books.services import BookService
-from src.auth.depandancy import AccessTokenBearer
+from src.auth.depandancy import AccessTokenBearer, RoleChecker
 
 book_router = APIRouter()
 book_service = BookService()
 access_token_bearer = AccessTokenBearer()
+role_checker = RoleChecker(allowed_role=['admin'])
 
 
 @book_router.get("/", status_code=status.HTTP_200_OK, response_model=list[BookResponse])
 async def get_all_books(session:AsyncSession=Depends(get_session), user_detail = Depends(access_token_bearer)):
     return await book_service.get_all_books(session)
 
-@book_router.post('/', status_code=status.HTTP_201_CREATED, response_model=BookResponse)
-async def create_a_book(book_data: BookCreateModel, session: AsyncSession=Depends(get_session), user_detail = Depends(access_token_bearer)):
+@book_router.get("/user/{uid}", status_code=status.HTTP_200_OK, response_model=list[BookResponse], dependencies=[Depends(role_checker)])
+async def get_user_book_submission(uid:uuid.UUID, session:AsyncSession=Depends(get_session), user_detail = Depends(access_token_bearer)):
+    return await book_service.get_user_books(uid, session)
+
+@book_router.post('/', status_code=status.HTTP_201_CREATED, response_model=BookResponse, dependencies=[Depends(role_checker)])
+async def create_a_book(book_data: BookCreateModel, session: AsyncSession=Depends(get_session), token_detail: dict = Depends(access_token_bearer)):
+    user_uid = token_detail.get("user")['sub']
     return await book_service.create_books(
         book_data=book_data,
+        user_uid=user_uid,
         session=session
     )
 
@@ -29,12 +36,12 @@ async def get_a_books(book_key: uuid.UUID, session:AsyncSession=Depends(get_sess
         book_key, session
     )
 
-@book_router.patch("/{book_key}", status_code=status.HTTP_200_OK, response_model=BookResponse)
+@book_router.patch("/{book_key}", status_code=status.HTTP_200_OK, response_model=BookResponse, dependencies=[Depends(role_checker)])
 async def update_a_books(book_key: uuid.UUID,book_data: BookUpdateModel, session:AsyncSession=Depends(get_session), user_detail = Depends(access_token_bearer)):
     return await book_service.update_books(
         book_key,book_data,  session
     )
 
-@book_router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+@book_router.delete("/", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(role_checker)])
 async def delete_a_book(book_key: uuid.UUID, session:AsyncSession=Depends(get_session), user_detail=Depends(access_token_bearer)):
     return await book_service.delete_book(book_key, session)
