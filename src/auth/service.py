@@ -14,9 +14,7 @@ class UserService:
             or_(
                 User.email == email,
                 User.uid == user_uid
-            )
-                
-            
+            )  
         )
         user = await session.execute(statement)
         return user.scalar_one_or_none()
@@ -32,6 +30,7 @@ class UserService:
         user_dict = user_data.model_dump()
         user_dict.pop("confirm_password")
         user_dict['password_hash'] = UserPassword().generate_password(user_dict.pop("password"))
+        user_dict['role'] = 'user'
         user = User(**user_dict)
         session.add(user)
         await session.commit()
@@ -39,6 +38,7 @@ class UserService:
         return user
     
     async def create_new_access_token(self, user_uid: uuid.UUID, session: AsyncSession):
+        print("user_uid---", user_uid)
         user = await self.get_a_user_by_email(session=session, user_uid = user_uid)
         if user.is_active is False:
             raise HTTPException(
@@ -48,7 +48,11 @@ class UserService:
         access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=5)
         access_token= HashingToken().encode_data(
                 {
-                    "sub":str(user.uid),
+                    "user":{
+                        "sub":str(user.uid),
+                        "user_email": user.email,
+                        'user_role': user.role,
+                    },
                     "exp": access_token_expired_time,
                     "refresh": False
                 }
@@ -60,7 +64,6 @@ class UserService:
         return {
                 "access_token": access_token,
                 "access_token_expired_time": access_token_expired_time,
-         
                 "user_uid": str(user.uid),
                 "user_email": user.email
             }
@@ -82,10 +85,14 @@ class UserService:
             access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=5)
             refresh_token_expired_time = datetime.now(timezone.utc) + timedelta(days=2)
             access_token= HashingToken().encode_data(
-                {
-                    "sub":str(user.uid),
+                {   
+                    "user":{
+                        "sub":str(user.uid),
+                        "user_email": user.email,
+                        'user_role': user.role,
+                    },
                     "exp": access_token_expired_time,
-                    "refresh": False
+                    "refresh": False,
                 }
             )
             
@@ -95,7 +102,11 @@ class UserService:
 
             refresh_token= HashingToken().encode_data(
                 {
-                    "sub": str(user.uid),
+                    "user":{
+                        "sub":str(user.uid),
+                        "user_email": user.email,
+                        'user_role': user.role,
+                    },
                     "exp": refresh_token_expired_time,
                     "refresh": True
                 }

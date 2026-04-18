@@ -7,6 +7,11 @@ from sqlalchemy import func, desc, asc
 from fastapi import HTTPException, status
 
 class BookService:
+    async def get_user_books(self, uid: uuid.UUID, session: AsyncSession):
+        statement = select(Book).where(Book.user_id == uid).order_by(desc(Book.created_at))
+        result = await session.execute(statement)
+        return result.scalars().fetchall()
+
     async def get_all_books(self, session: AsyncSession):
         statement = select(Book).order_by(desc(Book.created_at))
         result = await session.execute(statement)
@@ -27,8 +32,8 @@ class BookService:
         return book
 
 
-    async def create_books(self, book_data: BookCreateModel, session: AsyncSession):
-        book = Book(**(book_data.model_dump()))
+    async def create_books(self, book_data: BookCreateModel,user_uid: uuid.UUID, session: AsyncSession):
+        book = Book(**(book_data.model_dump()), user_id=user_uid)
         session.add(book)
         await session.commit()
         await session.refresh(book)

@@ -4,6 +4,7 @@ from datetime import datetime, date
 
 class Book(BaseModel):
     key: uuid.UUID
+    user_id: uuid.UUID | None = None
     title: str
     author: str
     publisher: str
