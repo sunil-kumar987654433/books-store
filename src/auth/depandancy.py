@@ -77,7 +77,6 @@ class RoleChecker:
         self.allowed_role = allowed_role
 
     async def __call__(self, token: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
-        print("token------", token)
         user = await user_service.get_a_user_by_email(user_uid = token.get("user")['sub'], session=session)
         if user is None:
             raise HTTPException(
