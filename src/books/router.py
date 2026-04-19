@@ -13,7 +13,7 @@ access_token_bearer = AccessTokenBearer()
 role_checker = RoleChecker(allowed_role=['admin', 'user'])
 
 
-@book_router.get("/", status_code=status.HTTP_200_OK, response_model=list[BookReview])
+@book_router.get("/", status_code=status.HTTP_200_OK, response_model=list[BookReview], dependencies=[Depends(access_token_bearer)])
 async def get_all_books(session:AsyncSession=Depends(get_session)):
     return await book_service.get_all_books(session)
 
