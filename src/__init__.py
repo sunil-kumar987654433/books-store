@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Request, responses
 from src.books.router import book_router
 from src.auth.routes import auth_router
 from src.reviews.routs import review_router
@@ -41,5 +41,14 @@ app.add_exception_handler(
     )
 )
 
+@app.exception_handler(500)
+async def internal_server_error(request:Request, exc):
+    return responses.JSONResponse(
+        content={
+            "message": 'Ooops! something went wrong.Please wait',
+            "error_code": 'server error'
+        },
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
 
 

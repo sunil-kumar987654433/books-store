@@ -29,6 +29,7 @@ class TokenBearer(HTTPBearer):
     async def __call__(self, request: Request):
         
         try:
+      
             cred= await super().__call__(request)
             token = cred.credentials.split(" ")[1]
             payload = HashingToken().decode_data(token)
