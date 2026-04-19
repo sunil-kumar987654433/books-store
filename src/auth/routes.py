@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.main import get_session
 from src.auth.service import UserService
-from src.auth.schema import UserCreate, UserLogin, UserModel
+from src.auth.schema import UserCreate, UserLogin, UserModel, UserBookModel
 from src.auth.depandancy import RefreshTokenBearer, AccessTokenBearer, RoleChecker
 from src.db.redis import add_jti_to_blocklist
 
@@ -16,7 +16,7 @@ auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(allowed_role=['admin', "user"])
 
-@auth_router.post("/signup")
+@auth_router.post("/signup", response_model=UserModel)
 async def CreateUserAccount(user_data: UserCreate, session: AsyncSession= Depends(get_session)):
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
@@ -61,6 +61,6 @@ async def revook_token(token_detail: dict = Depends(AccessTokenBearer())):
     )
 
 
-@auth_router.get("/me", response_model=UserModel)
+@auth_router.get("/me", response_model=UserBookModel)
 async def get_current_user(user = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session), _: bool = Depends(role_checker)):
     return await user_service.get_a_user_by_email(user_uid=user.get("user").get("sub"), session=session)

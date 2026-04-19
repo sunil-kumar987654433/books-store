@@ -17,10 +17,14 @@ class UserModel(BaseModel):
     username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
-    password_hash: str
+    # password_hash: str
     created_at: datetime
     updated_at: datetime
+
+
+class UserBookModel(UserModel):
     books: List[Book] | None = None
+
 
 
 

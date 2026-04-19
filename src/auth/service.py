@@ -8,6 +8,8 @@ from fastapi import HTTPException, status
 from src.auth.utils import UserPassword, HashingToken
 from datetime  import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+ACCESS_TOKEN_EXPIRED = 15
+REFRESH_TOKEN_EXPIRED = 2
 class UserService:
     async def get_a_user_by_email(self, session: AsyncSession, email: str | None= None, user_uid: uuid.UUID|None = None):
         statement = select(User).where(
@@ -38,14 +40,14 @@ class UserService:
         return user
     
     async def create_new_access_token(self, user_uid: uuid.UUID, session: AsyncSession):
-        print("user_uid---", user_uid)
+       
         user = await self.get_a_user_by_email(session=session, user_uid = user_uid)
         if user.is_active is False:
             raise HTTPException(
                 detail='Inactive user',
                 status_code=status.HTTP_403_FORBIDDEN
             )
-        access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=5)
+        access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRED)
         access_token= HashingToken().encode_data(
                 {
                     "user":{
@@ -82,8 +84,8 @@ class UserService:
                 status_code=status.HTTP_403_FORBIDDEN
             )
         if UserPassword().verify_password(user_data.password, user.password_hash):
-            access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=5)
-            refresh_token_expired_time = datetime.now(timezone.utc) + timedelta(days=2)
+            access_token_expired_time = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRED)
+            refresh_token_expired_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRED)
             access_token= HashingToken().encode_data(
                 {   
                     "user":{
@@ -118,7 +120,6 @@ class UserService:
                 "refresh_token": refresh_token,
                 'refresh_token_expired_time': str(int((refresh_token_expired_time - datetime.now(timezone.utc) ).total_seconds()))
             }
-            print("refresh_token_detail------------", refresh_token_detail)
             return {
                 "access_token": access_token,
                 "access_token_expired_time": access_token_expired_time,
