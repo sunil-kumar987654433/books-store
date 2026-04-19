@@ -10,7 +10,9 @@ from src.db.redis import token_in_blocklist, add_jti_to_blocklist
 from src.auth.service import UserService
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.main import get_session
-
+from src.errors import (
+    BooklyException, InvalidTokenException, RevokedToken, AccessTokenRequired, RefreshTokenRequired, UserAlreadyExist, InsufficientPermission, BookNotFound, TagNotFound, NotFound, create_exeption_handlers
+)
 
 user_service = UserService()
 
@@ -43,10 +45,11 @@ class TokenBearer(HTTPBearer):
 
             return payload
         except ExpiredSignatureError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="TOKEN EXPIRED" 
-            )
+            raise AccessTokenRequired()
+            # raise HTTPException(
+            #     status_code=status.HTTP_401_UNAUTHORIZED,
+            #     detail="TOKEN EXPIRED" 
+            # )
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
