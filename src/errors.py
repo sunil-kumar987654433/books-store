@@ -83,3 +83,17 @@ def create_exeption_handlers(status_code: int, initial_detail: Any)->Callable[[R
             status_code=status_code
         )
     return exception_handlers
+
+from fastapi import FastAPI, status
+def register_all_errors(app: FastAPI):
+    app.add_exception_handler(
+        AccessTokenRequired,
+        create_exeption_handlers(
+            status_code=status.HTTP_403_FORBIDDEN,
+            initial_detail={
+                "message": "access token required",
+                "error_code": "user_exist",
+                "resolution": "Please get new access token"
+            }
+        )
+    )

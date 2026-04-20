@@ -7,6 +7,15 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    MAIL_USERNAME: str
+    MAIL_PASSWORD:str
+    MAIL_FROM:str
+    MAIL_PORT:int
+    MAIL_SERVER:str
+
+    REDIS_URL: str # it is same as broker url
+
+
 
     model_config = SettingsConfigDict(
         env_file = '.env',
@@ -14,3 +23,6 @@ class Settings(BaseSettings):
     )
 
 Config = Settings()
+
+broker_url = Config.REDIS_URL
+result_backend = Config.REDIS_URL

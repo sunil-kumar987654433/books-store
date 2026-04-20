@@ -5,8 +5,11 @@ from src.reviews.routs import review_router
 from contextlib import asynccontextmanager
 from src.db.main import init_db
 from .errors import (
-    BooklyException, InvalidTokenException, RevokedToken, AccessTokenRequired, RefreshTokenRequired, UserAlreadyExist, InsufficientPermission, BookNotFound, TagNotFound, NotFound, create_exeption_handlers
+    BooklyException, InvalidTokenException, RevokedToken, AccessTokenRequired, RefreshTokenRequired, UserAlreadyExist, InsufficientPermission, BookNotFound, TagNotFound, NotFound, create_exeption_handlers, register_all_errors
 )
+from .middleware import register_middleware
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,17 +32,9 @@ app.include_router(book_router, tags=['books'], prefix=f'/api/{version}/books')
 app.include_router(auth_router, tags=['auth'], prefix=f'/api/{version}/auth')
 app.include_router(review_router, tags=['review'], prefix=f'/api/{version}/review')
 
-app.add_exception_handler(
-    AccessTokenRequired,
-    create_exeption_handlers(
-        status_code=status.HTTP_403_FORBIDDEN,
-        initial_detail={
-            "message": "access token required",
-            "error_code": "user_exist",
-            "resolution": "Please get new access token"
-        }
-    )
-)
+
+register_all_errors(app)
+register_middleware(app)
 
 @app.exception_handler(500)
 async def internal_server_error(request:Request, exc):
