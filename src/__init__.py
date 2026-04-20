@@ -26,6 +26,14 @@ app = FastAPI(
     title='bookly',
     description="A rest api for book review",
     version=version,
+    terms_of_service="service file",
+    docs_url=f"/api/{version}/docs",
+    redoc_url=f"/api/{version}/redoc",
+
+    contact={
+        "name": "book api",
+        "mail_address": "sunil.kumar987654433@gmail.com"
+    }
     # lifespan=lifespan
 )
 app.include_router(book_router, tags=['books'], prefix=f'/api/{version}/books')
