@@ -25,9 +25,12 @@ def register_middleware(app: FastAPI):
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts = [
+            "*.onrender.com",
+            "books-store-22p9.onrender.com"
             "localhost", 
             "127.0.0.1", 
-            "https://books-store-22p9.onrender.com"]
+            
+            ]
     )
     
 
