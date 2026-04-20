@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,21 +9,104 @@ from src.auth.service import UserService
 from src.auth.schema import UserCreate, UserLogin, UserModel, UserBookModel
 from src.auth.depandancy import RefreshTokenBearer, AccessTokenBearer, RoleChecker
 from src.db.redis import add_jti_to_blocklist
-
-
+from src.mail import SendMessage
+from src.auth.tasks import send_email
 
 auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(allowed_role=['admin', "user"])
 
 @auth_router.post("/signup", response_model=UserModel)
-async def CreateUserAccount(user_data: UserCreate, session: AsyncSession= Depends(get_session)):
+async def CreateUserAccount(user_data: UserCreate, bg_task: BackgroundTasks, session: AsyncSession= Depends(get_session)):
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
             detail="both password must be same",
             status_code=404
         )
-    return await user_service.create_user(user_data, session)
+
+    user =  await user_service.create_user(user_data, session)
+    html_message = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Document</title>
+            </head>
+            <body>
+                <!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:20px 0;">
+    <tr>
+      <td align="center">
+
+```
+    <!-- Main Container -->
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+
+      <!-- Header -->
+      <tr>
+        <td style="background:#4f46e5; color:#ffffff; padding:20px; text-align:center;">
+          <h1 style="margin:0; font-size:24px;">🚀 Welcome!</h1>
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding:30px; color:#333333;">
+          <h2 style="margin-top:0;">Hey there 👋</h2>
+          <p style="line-height:1.6;">
+            Thanks for signing up! We're excited to have you onboard.
+          </p>
+
+          <p style="line-height:1.6;">
+            You can now explore all features and start building amazing things with us.
+          </p>
+
+          <!-- Button -->
+          <div style="text-align:center; margin:30px 0;">
+            <a href="#" style="background:#4f46e5; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:6px; display:inline-block; font-weight:bold;">
+              Get Started
+            </a>
+          </div>
+
+          <p style="font-size:14px; color:#666;">
+            If you have any questions, feel free to reply to this email—we're here to help.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background:#f4f6f8; text-align:center; padding:20px; font-size:12px; color:#888;">
+          © 2026 Your Company. All rights reserved.
+        </td>
+      </tr>
+
+    </table>
+
+  </td>
+</tr>
+```
+
+  </table>
+
+</body>
+</html>
+
+            </body>
+            </html>
+        """
+    if user:
+        send_email.delay(reciepients=[user.email], subject='verify email', html_message=html_message)
+        return user
 
 
 @auth_router.post("/signin")
