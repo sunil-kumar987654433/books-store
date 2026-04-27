@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,19 +11,19 @@ from src.auth.depandancy import RefreshTokenBearer, AccessTokenBearer, RoleCheck
 from src.db.redis import add_jti_to_blocklist
 from src.mail import SendMessage
 from src.auth.tasks import send_email
-
+from pprint import pprint
 auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(allowed_role=['admin', "user"])
 
 @auth_router.post("/signup", response_model=UserModel)
-async def CreateUserAccount(user_data: UserCreate, bg_task: BackgroundTasks, session: AsyncSession= Depends(get_session)):
+async def CreateUserAccount(user_data: UserCreate, session: AsyncSession= Depends(get_session)):
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
             detail="both password must be same",
             status_code=404
         )
-
+    print("==============", user_data)
     user =  await user_service.create_user(user_data, session)
     html_message = """
             <!DOCTYPE html>

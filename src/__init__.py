@@ -53,5 +53,3 @@ async def internal_server_error(request:Request, exc):
         },
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
-
-

@@ -23,7 +23,9 @@ class UserService:
         
 
     async def create_user(self, user_data: UserCreate, session: AsyncSession):
+        print("--------------------\n", user_data)
         is_user = await self.get_a_user_by_email(session = session, email = user_data.email)
+        print("is_user====", is_user)
         if is_user:
             raise HTTPException(
                 detail="Username or email already exist",
