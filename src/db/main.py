@@ -6,7 +6,7 @@ from fastapi import Depends
 
 
 engine  = create_async_engine(
-        url=Config.DATABASE_URL
+        url=Config.DATABASE_URL.replace("%", "%%")
     )
 
 
