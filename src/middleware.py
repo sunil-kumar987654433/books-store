@@ -16,7 +16,8 @@ def register_middleware(app: FastAPI):
 
     app.add_middleware(
         CORSMiddleware, 
-        allow_origins = ["*"],
+        # allow_origins = ["*"],
+        allow_origins = ["http://begining.fun", "https://begining.fun"]
         allow_methods = ["*"],
         allow_headers = ['*'],
         allow_credentials = True
@@ -25,11 +26,11 @@ def register_middleware(app: FastAPI):
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts = [
-            "*.onrender.com",
-            "books-store-22p9.onrender.com"
-            "localhost", 
-            "127.0.0.1", 
-            
+            "begining.fun", 
+            "www.begining.fun", 
+            "13.233.225.195",
+            "localhost",
+            "127.0.0.1"
             ]
     )
     
@@ -40,7 +41,7 @@ def register_middleware(app: FastAPI):
         response = await call_next(request)
         process_time = time.perf_counter()- start_time
         logger.info(
-            f"{request.client.host} - "
+            f"{request.client.host if request.client else 'unknown'} - "
             f"{request.method} {request.url.path} - "
             f"{response.status_code} - "
             f"{process_time:.4f}s"
